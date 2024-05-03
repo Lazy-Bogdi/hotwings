@@ -2,15 +2,18 @@
 
 namespace App\Entity;
 
+use App\Entity\Recipe;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\IngredientRepository;
+use App\Interface\Models\RecipeInterface;
+use App\Interface\Models\IngredientInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: IngredientRepository::class)]
 // #[ApiResource]
-class Ingredient
+class Ingredient implements IngredientInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -29,12 +32,12 @@ class Ingredient
         return $this->id;
     }
 
-    public function getRecipe(): ?Recipe
+    public function getRecipe(): ?RecipeInterface
     {
         return $this->recipe;
     }
 
-    public function setRecipe(?Recipe $recipe): static
+    public function setRecipe(?RecipeInterface $recipe): static
     {
         $this->recipe = $recipe;
 

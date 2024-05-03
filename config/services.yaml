@@ -22,16 +22,26 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\Service\RecipeScraper:
+    App\Service\Scraper\RecipeScraper:
         public: true
 
-    App\Command\ScrapeRecipesCommand:
+    App\Command\Scraper\ScrapeRecipesCommand:
         arguments:
             $dataDirectory: '%kernel.project_dir%/scrapedRecipes'
 
-    App\Command\ImportRecipesCommand:
+    App\Command\Scraper\ImportRecipesCommand:
         arguments:
             $dataDirectory: '%kernel.project_dir%/scrapedRecipes'
+
+    App\Interface\DataManager\DataManagerInterface:
+        factory: ['App\Factory\DataManagerFactory', 'create']
+        arguments:
+            - '@doctrine.orm.entity_manager'
+            - '@doctrine_mongodb.odm.document_manager'
+            - '%env(DATABASE_TYPE)%'
+
+    App\Factory\ModelFactory:
+        arguments: ['%env(DATABASE_TYPE)%']
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

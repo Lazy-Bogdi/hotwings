@@ -1,7 +1,7 @@
 <?php
 // src/Service/RecipeScraper.php
 
-namespace App\Service;
+namespace App\Service\Scraper;
 
 use Symfony\Component\BrowserKit\HttpBrowser;
 use Symfony\Component\HttpClient\HttpClient;
@@ -36,25 +36,6 @@ class RecipeScraper
             throw new \Exception("No title found on the page");
         }
 
-        // $title = $crawler->filter('h1')->first()->text();
-
-        // $ingredients = $crawler->filter('ul.mntl-structured-ingredients__list li')->each(function (Crawler $node) {
-        //     $quantity = $node->filter('span[data-ingredient-quantity="true"]')->text();
-        //     $unit = $node->filter('span[data-ingredient-unit="true"]')->text();
-        //     $name = $node->filter('span[data-ingredient-name="true"]')->text();
-        //     return ['content' => trim("$quantity $unit $name")];
-        // });
-        // $steps = $crawler->filter('div.recipe__steps-content ol li')->each(function (Crawler $node) {
-        //     $stepText = $node->filter('p')->text();
-        //     return ['content' => trim($stepText)];
-        // });
-
-        // return [
-        //     'title' => trim($title),
-        //     'ingredients' => $ingredients,
-        //     'steps' => $steps
-        // ];
-
         $title = $crawler->filter('h1')->text();
 
         // Handle ingredients
@@ -83,7 +64,7 @@ class RecipeScraper
         return $recipe;
     }
 
-    public function fetchAllRecipes($indexUrl): array
+    public function fetchAllRecipes($indexUrl, callable $progressCallback): array
     {
         $crawler = $this->browser->request('GET', $indexUrl);
         $links = $crawler->filter('a.mntl-card-list-items')->each(function (Crawler $node) {
@@ -97,7 +78,7 @@ class RecipeScraper
                 $recipes[] = $recipe;
                 // dump($recipe);
             }
-            
+            $progressCallback(); 
         }
         return $recipes;
     }

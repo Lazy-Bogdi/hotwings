@@ -1,39 +1,35 @@
 <?php
+// src/Document/RecipeStep.php
 
-namespace App\Entity;
+namespace App\Document;
 
-// use ApiPlatform\Metadata\ApiResource;
-
+use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
+use ApiPlatform\Metadata\ApiResource;
 use App\Interface\Models\RecipeInterface;
-use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
-use App\Repository\RecipeStepRepository;
 use App\Interface\Models\RecipeStepInterface;
-use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity(repositoryClass: RecipeStepRepository::class)]
 // #[ApiResource]
+#[MongoDB\Document]
 class RecipeStep implements RecipeStepInterface
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[MongoDB\Id]
+    private $id;
 
-    #[ORM\ManyToOne(inversedBy: 'steps')]
-    private ?Recipe $recipe = null;
+    #[MongoDB\ReferenceOne(targetDocument: Recipe::class, inversedBy: 'steps')]
+    private $recipe;
 
-    #[ORM\Column(nullable: true)]
+    #[MongoDB\Field(type: 'integer')]
     private ?int $totalSteps = null;
 
-    #[ORM\Column(nullable: true)]
+    #[MongoDB\Field(type: 'integer')]
     private ?int $stepNumber = null;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[MongoDB\Field(type: 'string')]
     #[Groups(['read', 'write'])]
-    private ?string $content = null;
+    private $content;
 
-    public function getId(): ?int
+    public function getId()
     {
         return $this->id;
     }
@@ -43,10 +39,9 @@ class RecipeStep implements RecipeStepInterface
         return $this->recipe;
     }
 
-    public function setRecipe(?RecipeInterface $recipe): static
+    public function setRecipe(?RecipeInterface $recipe): self
     {
         $this->recipe = $recipe;
-
         return $this;
     }
 
@@ -79,10 +74,9 @@ class RecipeStep implements RecipeStepInterface
         return $this->content;
     }
 
-    public function setContent(?string $content): static
+    public function setContent(?string $content): self
     {
         $this->content = $content;
-
         return $this;
     }
 }

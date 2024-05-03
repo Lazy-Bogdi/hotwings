@@ -1,47 +1,38 @@
 <?php
+// src/Document/Recipe.php
 
-namespace App\Entity;
+namespace App\Document;
 
-use Doctrine\ORM\Mapping as ORM;
-use App\Repository\RecipeRepository;
+use Doctrine\ODM\MongoDB\Mapping\Annotations as MongoDB;
+// use ApiPlatform\Core\Annotation\ApiResource;
 use ApiPlatform\Metadata\ApiResource;
 use App\Interface\Models\IngredientInterface;
 use App\Interface\Models\RecipeInterface;
 use App\Interface\Models\RecipeStepInterface;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity(repositoryClass: RecipeRepository::class)]
-// #[ApiResource]
 #[ApiResource(
     normalizationContext: ['groups' => ['read']],
     denormalizationContext: ['groups' => ['write']]
 )]
+#[MongoDB\Document]
 class Recipe implements RecipeInterface
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    #[MongoDB\Id]
+    private $id;
 
-    #[ORM\Column(length: 255)]
+    #[MongoDB\Field(type: 'string')]
     #[Groups(['read', 'write'])]
-    private ?string $title = null;
+    private $title;
 
-    /**
-     * @var Collection<int, Ingredient>
-     */
-    #[ORM\OneToMany(targetEntity: Ingredient::class, mappedBy: 'recipe', cascade: ['persist'])]
+    #[MongoDB\ReferenceMany(targetDocument: Ingredient::class, mappedBy: 'recipe', cascade: ['persist'])]
     #[Groups(['read', 'write'])]
-    private Collection $ingredients;
+    private $ingredients;
 
-    /**
-     * @var Collection<int, RecipeStep>
-     */
-    #[ORM\OneToMany(targetEntity: RecipeStep::class, mappedBy: 'recipe',  cascade: ['persist'])]
+    #[MongoDB\ReferenceMany(targetDocument: RecipeStep::class, mappedBy: 'recipe', cascade: ['persist'])]
     #[Groups(['read', 'write'])]
-    private Collection $steps;
+    private $steps;
 
     public function __construct()
     {
@@ -59,32 +50,27 @@ class Recipe implements RecipeInterface
         return $this->title;
     }
 
-    public function setTitle(string $title): static
+    public function setTitle(string $title): self
     {
         $this->title = $title;
-
         return $this;
     }
 
-    /**
-     * @return Collection<int, Ingredient>
-     */
-    public function getIngredients(): Collection
+    public function getIngredients()
     {
         return $this->ingredients;
     }
 
-    public function addIngredient(IngredientInterface $ingredient): static
+    public function addIngredient(IngredientInterface $ingredient): self
     {
         if (!$this->ingredients->contains($ingredient)) {
-            $this->ingredients->add($ingredient);
+            $this->ingredients[] = $ingredient;
             $ingredient->setRecipe($this);
         }
-
         return $this;
     }
 
-    public function removeIngredient(IngredientInterface $ingredient): static
+    public function removeIngredient(IngredientInterface $ingredient): self
     {
         if ($this->ingredients->removeElement($ingredient)) {
             // set the owning side to null (unless already changed)
@@ -92,29 +78,24 @@ class Recipe implements RecipeInterface
                 $ingredient->setRecipe(null);
             }
         }
-
         return $this;
     }
 
-    /**
-     * @return Collection<int, RecipeStep>
-     */
-    public function getSteps(): Collection
+    public function getSteps()
     {
         return $this->steps;
     }
 
-    public function addStep(RecipeStepInterface $step): static
+    public function addStep(RecipeStepInterface $step): self
     {
         if (!$this->steps->contains($step)) {
-            $this->steps->add($step);
+            $this->steps[] = $step;
             $step->setRecipe($this);
         }
-
         return $this;
     }
 
-    public function removeStep(RecipeStepInterface $step): static
+    public function removeStep(RecipeStepInterface $step): self
     {
         if ($this->steps->removeElement($step)) {
             // set the owning side to null (unless already changed)
@@ -122,7 +103,6 @@ class Recipe implements RecipeInterface
                 $step->setRecipe(null);
             }
         }
-
         return $this;
     }
 }

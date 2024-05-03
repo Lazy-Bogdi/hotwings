@@ -1,15 +1,16 @@
 <?php
 // src/Command/ScrapeRecipesCommand.php
 
-namespace App\Command;
+namespace App\Command\Scraper;
 
-use App\Service\RecipeScraper;
+use App\Service\Scraper\RecipeScraper;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 #[AsCommand(name: 'app:scrape-recipes')]
 class ScrapeRecipesCommand extends Command
@@ -35,10 +36,16 @@ class ScrapeRecipesCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('Starting scrape...');
-        $recipes = $this->scraper->fetchAllRecipes('https://www.allrecipes.com/recipes/17561/lunch/');
-        $output->writeln('Scraped ' . count($recipes) . ' recipes.');
 
-        if (count($recipes) > 0) {
+        $progressBar = new ProgressBar($output);
+        $progressBar->start();
+
+        $recipes = $this->scraper->fetchAllRecipes('https://www.allrecipes.com/recipes/17561/lunch/', function () use ($progressBar) {
+            $progressBar->advance();
+        });
+        $output->writeln('Scraped ' . count($recipes) . 'valid recipes.');
+
+        if (!empty($recipes)) {
             $filesystem = new Filesystem();
             try {
                 $filePath = $this->dataDirectory . '/recipes.json';
@@ -50,8 +57,6 @@ class ScrapeRecipesCommand extends Command
             }
         }
 
-        // Save to database or output data
-        // $this->recipeService->saveRecipes($recipes); // Implement this method if needed
 
         return Command::SUCCESS;
     }

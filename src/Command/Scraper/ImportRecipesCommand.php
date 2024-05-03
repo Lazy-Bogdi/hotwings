@@ -1,18 +1,16 @@
 <?php
 // src/Command/ImportRecipesCommand.php
 
-namespace App\Command;
+namespace App\Command\Scraper;
 
-use App\Entity\Recipe;
-use App\Entity\Ingredient;
-use App\Entity\RecipeStep;
-use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Attribute\AsCommand;
+use App\Interface\DataManager\DataManagerInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Console\Helper\ProgressBar;
+use App\Factory\ModelFactory;
 
 #[AsCommand(
     name: 'app:import-recipes',
@@ -22,14 +20,17 @@ use Symfony\Component\Console\Helper\ProgressBar;
 )]
 class ImportRecipesCommand extends Command
 {
-    private $entityManager;
+    // private $entityManager;
     private $dataDirectory;
+    private $dataManager;
+    private $modelFactory;
 
-    public function __construct(EntityManagerInterface $entityManager, string $dataDirectory)
+    public function __construct(DataManagerInterface $dataManager, string $dataDirectory, ModelFactory $modelFactory)
     {
         parent::__construct();
-        $this->entityManager = $entityManager;
+        $this->dataManager = $dataManager;
         $this->dataDirectory = $dataDirectory;
+        $this->modelFactory = $modelFactory;
     }
 
     protected function configure()
@@ -42,6 +43,7 @@ class ImportRecipesCommand extends Command
     {
         $filePath = $this->dataDirectory . '/recipes.json';
         $filesystem = new Filesystem();
+
 
         if (!$filesystem->exists($filePath)) {
             $output->writeln('No recipes file found.');
@@ -60,12 +62,17 @@ class ImportRecipesCommand extends Command
         $progressBar->start();
 
         foreach ($recipesData as $data) {
-            $recipe = new Recipe();
+            $recipe = $this->modelFactory->create('recipe');
             $recipe->setTitle($data['title']);
 
-            
+            if ($this->dataManager->exists($recipe)) {
+                $output->writeln("Skipping duplicate recipe: " . $data['title']);
+                $progressBar->advance();
+                continue;
+            }
+
             foreach ($data['ingredients'] as $ingredientData) {
-                $ingredient = new Ingredient();
+                $ingredient = $this->modelFactory->create('ingredient');
                 $ingredient->setContent($ingredientData['content']);
                 $recipe->addIngredient($ingredient);
             }
@@ -73,7 +80,8 @@ class ImportRecipesCommand extends Command
             $stepsAmount = count($data['steps']);
             $i = 1;
             foreach ($data['steps'] as $stepData) {
-                $step = new RecipeStep();
+                $step = $this->modelFactory->create('recipeStep');
+                // $step = new RecipeStep();
                 $step->setStepNumber($i);
                 $step->setTotalSteps($stepsAmount);
                 $step->setContent($stepData['content']);
@@ -81,11 +89,11 @@ class ImportRecipesCommand extends Command
                 $i++;
             }
 
-            $this->entityManager->persist($recipe);
+            $this->dataManager->save($recipe);
             $progressBar->advance();
         }
 
-        $this->entityManager->flush();
+        // $this->dataManager->flush();
         $progressBar->finish();
 
         $output->writeln("\nImported recipes successfully.");

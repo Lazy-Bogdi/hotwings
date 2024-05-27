@@ -22,7 +22,7 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\Service\Scraper\RecipeScraper:
+    App\Service\Scraper\RecipeScraperService:
         public: true
 
     App\Command\Scraper\ScrapeRecipesCommand:
@@ -32,6 +32,7 @@ services:
     App\Command\Scraper\ImportRecipesCommand:
         arguments:
             $dataDirectory: '%kernel.project_dir%/scrapedRecipes'
+            $dbType: '%env(DATABASE_TYPE)%'
 
     App\Interface\DataManager\DataManagerInterface:
         factory: ['App\Factory\DataManagerFactory', 'create']
@@ -42,6 +43,10 @@ services:
 
     App\Factory\ModelFactory:
         arguments: ['%env(DATABASE_TYPE)%']
+
+    App\Service\ImportData\ImportDataService:
+        arguments:
+            $dataDirectory: '%kernel.project_dir%/scrapedRecipes'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

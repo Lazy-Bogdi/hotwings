@@ -3,7 +3,7 @@
 
 namespace App\Command\Scraper;
 
-use App\Service\Scraper\RecipeScraper;
+use App\Service\Scraper\RecipeScraperService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,7 +20,7 @@ class ScrapeRecipesCommand extends Command
     private $scraper;
     private $dataDirectory;
 
-    public function __construct(RecipeScraper $scraper, string $dataDirectory)
+    public function __construct(RecipeScraperService $scraper, string $dataDirectory)
     {
         $this->scraper = $scraper;
         $this->dataDirectory = $dataDirectory;

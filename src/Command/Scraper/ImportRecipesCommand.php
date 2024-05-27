@@ -24,13 +24,15 @@ class ImportRecipesCommand extends Command
     private $dataDirectory;
     private $dataManager;
     private $modelFactory;
+    private $dbType;
 
-    public function __construct(DataManagerInterface $dataManager, string $dataDirectory, ModelFactory $modelFactory)
+    public function __construct(DataManagerInterface $dataManager, string $dataDirectory, ModelFactory $modelFactory, string $dbType)
     {
         parent::__construct();
         $this->dataManager = $dataManager;
         $this->dataDirectory = $dataDirectory;
         $this->modelFactory = $modelFactory;
+        $this->dbType = $dbType;
     }
 
     protected function configure()
@@ -72,20 +74,29 @@ class ImportRecipesCommand extends Command
             }
 
             foreach ($data['ingredients'] as $ingredientData) {
-                $ingredient = $this->modelFactory->create('ingredient');
-                $ingredient->setContent($ingredientData['content']);
-                $recipe->addIngredient($ingredient);
+                if ($this->dbType == "sql") {
+                    $ingredient = $this->modelFactory->create('ingredient');
+                    $ingredient->setContent($ingredientData['content']);
+                    $recipe->addIngredient($ingredient);
+                } else {
+                    $recipe->addIngredient($ingredientData['content']);
+                }
             }
 
             $stepsAmount = count($data['steps']);
             $i = 1;
             foreach ($data['steps'] as $stepData) {
-                $step = $this->modelFactory->create('recipeStep');
-                // $step = new RecipeStep();
-                $step->setStepNumber($i);
-                $step->setTotalSteps($stepsAmount);
-                $step->setContent($stepData['content']);
-                $recipe->addStep($step);
+                if ($this->dbType == "sql") {
+                    $step = $this->modelFactory->create('recipeStep');
+                    // $step = new RecipeStep();
+                    $step->setStepNumber($i);
+                    $step->setTotalSteps($stepsAmount);
+                    $step->setContent($stepData['content']);
+                    $recipe->addStep($step);
+                } else {
+                    $recipe->addStep(["instruction" => $stepData['content'], "stepNumber" => $i]);
+                }
+
                 $i++;
             }
 

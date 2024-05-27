@@ -2,22 +2,33 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\Get;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiFilter;
 use App\Repository\RecipeRepository;
 use ApiPlatform\Metadata\ApiResource;
-use App\Interface\Models\IngredientInterface;
+use ApiPlatform\Metadata\GetCollection;
 use App\Interface\Models\RecipeInterface;
-use App\Interface\Models\RecipeStepInterface;
 use Doctrine\Common\Collections\Collection;
+use App\Interface\Models\IngredientInterface;
+use App\Interface\Models\RecipeStepInterface;
 use Doctrine\Common\Collections\ArrayCollection;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: RecipeRepository::class)]
 // #[ApiResource]
 #[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection()
+        // new Post()
+    ],
     normalizationContext: ['groups' => ['read']],
-    denormalizationContext: ['groups' => ['write']]
+    denormalizationContext: ['groups' => ['write']],
+    paginationEnabled: false
 )]
+#[ApiFilter(SearchFilter::class, properties: ['title' => 'partial', 'ingredients' => 'partial'])]
 class Recipe implements RecipeInterface
 {
     #[ORM\Id]
@@ -26,21 +37,21 @@ class Recipe implements RecipeInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read', 'write'])]
+    #[Groups(['read'])]
     private ?string $title = null;
 
     /**
      * @var Collection<int, Ingredient>
      */
     #[ORM\OneToMany(targetEntity: Ingredient::class, mappedBy: 'recipe', cascade: ['persist'])]
-    #[Groups(['read', 'write'])]
+    #[Groups(['read'])]
     private Collection $ingredients;
 
     /**
      * @var Collection<int, RecipeStep>
      */
     #[ORM\OneToMany(targetEntity: RecipeStep::class, mappedBy: 'recipe',  cascade: ['persist'])]
-    #[Groups(['read', 'write'])]
+    #[Groups(['read'])]
     private Collection $steps;
 
     public function __construct()

@@ -43,10 +43,6 @@ services:
 
     App\Factory\ModelFactory:
         arguments: ['%env(DATABASE_TYPE)%']
-
-    App\Service\ImportData\ImportDataService:
-        arguments:
-            $dataDirectory: '%kernel.project_dir%/scrapedRecipes'
-
+        
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

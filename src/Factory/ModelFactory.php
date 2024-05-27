@@ -19,10 +19,15 @@ class ModelFactory
     public function create(string $modelName): object
     {
         $className = ucfirst($modelName); // Ensure first letter is uppercase
+
+        if ($this->dbType === 'nosql') {
+            $className .= 'Mongo';
+        }
+
         $fullClassName = $this->namespaceMap[$this->dbType] . $className;
         // dump($fullClassName);
         if (!class_exists($fullClassName)) {
-            
+
             throw new \InvalidArgumentException("Class '$fullClassName' does not exist.");
         }
 
